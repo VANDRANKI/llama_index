@@ -1,6 +1,6 @@
 # Contributing to LlamaIndex
 
-Welcome to **LlamaIndex**! We’re excited that you want to contribute and become part of our growing community. Whether
+Welcome to **LlamaIndex**! We're excited that you want to contribute and become part of our growing community. Whether
 you're interested in building integrations, fixing bugs, or adding exciting new features, we've made it easy for you to
 get started.
 
@@ -10,7 +10,7 @@ get started.
 
 We use `uv` as the package and project manager for all the Python packages in this repository. Before contributing, make sure you have `uv` installed (see [installation guide](https://docs.astral.sh/uv/getting-started/installation/)).
 
-If you're ready to dive in, here’s a quick setup guide to get you going:
+If you're ready to dive in, here's a quick setup guide to get you going:
 
 1. **Fork** the GitHub repo, clone your fork and open a terminal at the root of the git repository `llama_index`.
 2. At the root of the repo, run the following command to setup the global virtual environment we use for the pre-commit hooks and the linters:
@@ -43,9 +43,33 @@ cd llama-index-integrations/llms/llama-index-llms-openai
 uv run -- pytest
 ```
 
-**That’s it!** The package you're working on is already installed in editable mode, so you can go on, change the code and run the tests!
+**That's it!** The package you're working on is already installed in editable mode, so you can go on, change the code and run the tests!
 
 Once you get familiar with the project, scroll down to the [Development Guidelines](#development-guidelines) for more details.
+
+---
+
+## Finding the Right Package
+
+The monorepo is organized so that each concern lives in a dedicated package. Before starting work, identify where your change belongs:
+
+| What you want to change | Package to modify |
+|-------------------------|-------------------|
+| Core abstractions, base classes, pipelines, query engine | `llama-index-core/` |
+| Support for a specific LLM provider (OpenAI, Anthropic, …) | `llama-index-integrations/llms/llama-index-llms-<provider>/` |
+| Support for a specific embedding model | `llama-index-integrations/embeddings/llama-index-embeddings-<provider>/` |
+| Vector store adapter (Pinecone, Weaviate, Chroma, …) | `llama-index-integrations/vector_stores/llama-index-vector-stores-<name>/` |
+| Data loading / file readers | `llama-index-integrations/readers/llama-index-readers-<name>/` |
+| Tracing hooks, span callbacks, instrumentation | `llama-index-instrumentation/` |
+| Shared utility helpers (tokenizers, async wrappers, …) | `llama-index-utils/` |
+
+### Decision guide
+
+1. **Is it a new provider integration?** Go to the matching `llama-index-integrations/<type>/` subdirectory. Note: we are **no longer accepting new integration packages** — new integrations should be published as standalone PyPI packages.
+2. **Does it change how any existing base class or pipeline works?** That belongs in `llama-index-core/`. Changes here have the widest blast radius — make sure to run the full core test suite and check for downstream breakage in `llama-index-integrations/`.
+3. **Is it a utility used by more than one package?** Add it to `llama-index-utils/` so it can be shared without creating a dependency on `core`.
+4. **Is it tracing or observability?** Use `llama-index-instrumentation/`, which provides the `Dispatcher` and span/event hook system.
+5. **Still unsure?** Open a GitHub Issue describing the change and ask for guidance before writing code — it saves everyone time.
 
 ---
 
@@ -105,7 +129,7 @@ We use `pytest` for testing. Make sure you run tests in each package you modify:
 uv run -- pytest
 ```
 
-If you’re integrating with a remote system, **mock** it to prevent test failures from external changes.
+If you're integrating with a remote system, **mock** it to prevent test failures from external changes.
 
 By default, CI/CD will fail if test coverage is less than 50%, so make sure your packages or changes are covered by tests.
 
@@ -142,16 +166,16 @@ Overall, our suggestion is to use AI by starting with **small changes**, validat
 
 ---
 
-## 👥 Join the Community
+## Join the Community
 
-We’d love to hear from you and collaborate! Join our Discord community to ask questions, share ideas, or just chat with fellow developers.
+We'd love to hear from you and collaborate! Join our Discord community to ask questions, share ideas, or just chat with fellow developers.
 
 Join us on Discord <https://discord.gg/dGcwcsnxhU>
 
 ---
 
-## 🌟 Acknowledgements
+## Acknowledgements
 
-Thank you for considering contributing to LlamaIndex! Every contribution—whether it’s code, documentation, or ideas—helps make this project better for everyone.
+Thank you for considering contributing to LlamaIndex! Every contribution—whether it's code, documentation, or ideas—helps make this project better for everyone.
 
-Happy coding! 😊
+Happy coding!

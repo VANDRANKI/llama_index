@@ -1,4 +1,16 @@
-"""Async utils."""
+"""Async utility helpers for running coroutines from both sync and async contexts.
+
+This module provides:
+
+- :func:`asyncio_run` -- run a coroutine from synchronous code, even when an
+  event loop is already running (e.g. inside Jupyter notebooks).
+- :func:`run_async_tasks` -- gather a list of coroutines with optional tqdm
+  progress reporting.
+- :func:`batch_gather` -- gather coroutines in fixed-size batches to limit
+  concurrency without a semaphore.
+- :func:`run_jobs` -- gather coroutines with a semaphore-based worker pool
+  and optional tqdm progress reporting (instrumented via the dispatcher).
+"""
 
 import asyncio
 import contextvars
@@ -12,6 +24,19 @@ dispatcher = instrument.get_dispatcher(__name__)
 
 
 def get_asyncio_module(show_progress: bool = False) -> Any:
+    """Return the asyncio-compatible gather module to use for task collection.
+
+    When *show_progress* is ``True``, returns ``tqdm.asyncio.tqdm_asyncio`` so
+    that callers can swap it in for ``asyncio`` transparently.  Otherwise the
+    standard :mod:`asyncio` module is returned.
+
+    Args:
+        show_progress (bool): If ``True``, return ``tqdm_asyncio`` for
+            progress-bar-aware gathering.  Defaults to ``False``.
+
+    Returns:
+        The asyncio or tqdm_asyncio module.
+    """
     if show_progress:
         from tqdm.asyncio import tqdm_asyncio
 
@@ -23,6 +48,12 @@ def get_asyncio_module(show_progress: bool = False) -> Any:
 
 
 def asyncio_module(show_progress: bool = False) -> Any:
+    """Deprecated alias for :func:`get_asyncio_module`.
+
+    .. deprecated::
+        Use :func:`get_asyncio_module` instead.  This alias will be removed in
+        a future release.
+    """
     import warnings
 
     warnings.warn(
@@ -35,11 +66,24 @@ def asyncio_module(show_progress: bool = False) -> Any:
 
 
 def asyncio_run(coro: Coroutine) -> Any:
-    """
-    Gets an existing event loop to run the coroutine.
+    """Run *coro* to completion from synchronous code, handling nested loops.
 
-    If there is no existing event loop, creates a new one.
-    If an event loop is already running, uses threading to run in a separate thread.
+    This helper attempts to reuse an already-existing event loop where
+    possible.  When an event loop is currently running (as is the case inside
+    Jupyter notebooks or when called from within another coroutine), the
+    coroutine is submitted to a new event loop running in a background thread
+    so that the caller does not block the existing loop.
+
+    Args:
+        coro (Coroutine): The coroutine to execute.
+
+    Returns:
+        Any: The return value of *coro*.
+
+    Raises:
+        RuntimeError: If a nested async environment is detected and
+            ``nest_asyncio`` has not been applied.  The error message includes
+            instructions for resolving the issue.
     """
     try:
         # Check if there's an existing event loop
@@ -66,11 +110,11 @@ def asyncio_run(coro: Coroutine) -> Any:
             # If we're here, there's an existing loop but it's not running
             return loop.run_until_complete(coro)
 
-    except RuntimeError as e:
+    except RuntimeError:
         # If we can't get the event loop, we're likely in a different thread
         try:
             return asyncio.run(coro)
-        except RuntimeError as e:
+        except RuntimeError:
             raise RuntimeError(
                 "Detected nested async. Please use nest_asyncio.apply() to allow nested event loops."
                 "Or, use async entry methods like `aquery()`, `aretriever`, `achat`, etc."
@@ -82,7 +126,22 @@ def run_async_tasks(
     show_progress: bool = False,
     progress_bar_desc: str = "Running async tasks",
 ) -> List[Any]:
-    """Run a list of async tasks."""
+    """Run a list of coroutines concurrently and return their results.
+
+    All tasks are gathered via :func:`asyncio.gather`.  When *show_progress*
+    is ``True``, ``tqdm.asyncio`` is used to display a progress bar; if tqdm
+    is unavailable the tasks run without a progress indicator.
+
+    Args:
+        tasks (List[Coroutine]): Coroutines to execute.
+        show_progress (bool): Whether to display a tqdm progress bar.
+            Defaults to ``False``.
+        progress_bar_desc (str): Description label shown on the tqdm bar.
+            Defaults to ``"Running async tasks"``.
+
+    Returns:
+        List[Any]: Results from each coroutine in the same order as *tasks*.
+    """
     tasks_to_execute: List[Any] = tasks
     if show_progress:
         try:
@@ -113,6 +172,17 @@ def run_async_tasks(
 
 
 def chunks(iterable: Iterable, size: int) -> Iterable:
+    """Split *iterable* into consecutive chunks of at most *size* items.
+
+    The last chunk may be padded with ``None`` values to reach *size*.
+
+    Args:
+        iterable (Iterable): The source iterable to partition.
+        size (int): Maximum number of items per chunk.
+
+    Returns:
+        Iterable: An iterable of tuples, each of length *size*.
+    """
     args = [iter(iterable)] * size
     return zip_longest(*args, fillvalue=None)
 
@@ -120,6 +190,22 @@ def chunks(iterable: Iterable, size: int) -> Iterable:
 async def batch_gather(
     tasks: List[Coroutine], batch_size: int = 10, verbose: bool = False
 ) -> List[Any]:
+    """Gather *tasks* in sequential batches to bound peak concurrency.
+
+    Unlike a semaphore-based approach, tasks in later batches do not start
+    until all tasks in the current batch have completed.  This is simpler but
+    less efficient when tasks have uneven durations.
+
+    Args:
+        tasks (List[Coroutine]): Coroutines to execute.
+        batch_size (int): Maximum number of coroutines to run concurrently
+            within a single batch.  Defaults to ``10``.
+        verbose (bool): If ``True``, print a progress line after each batch.
+            Defaults to ``False``.
+
+    Returns:
+        List[Any]: Results from all tasks in the same order as *tasks*.
+    """
     output: List[Any] = []
     for task_chunk in chunks(tasks, batch_size):
         task_chunk = (task for task in task_chunk if task is not None)
@@ -142,19 +228,26 @@ async def run_jobs(
     workers: int = DEFAULT_NUM_WORKERS,
     desc: Optional[str] = None,
 ) -> List[T]:
-    """
-    Run jobs.
+    """Run *jobs* concurrently using a semaphore-based worker pool.
+
+    At most *workers* coroutines execute at the same time.  Results are
+    returned in the same order as the input list regardless of completion
+    order.
+
+    This function is instrumented with the LlamaIndex dispatcher so that span
+    events are emitted for observability integrations.
 
     Args:
-        jobs (List[Coroutine]):
-            List of jobs to run.
-        show_progress (bool):
-            Whether to show progress bar.
+        jobs (List[Coroutine]): Coroutines to execute.
+        show_progress (bool): Whether to display a tqdm progress bar.
+            Defaults to ``False``.
+        workers (int): Maximum number of coroutines that may run concurrently.
+            Defaults to :data:`DEFAULT_NUM_WORKERS` (``4``).
+        desc (str | None): Optional description label for the tqdm progress
+            bar.  Ignored when *show_progress* is ``False``.
 
     Returns:
-        List[Any]:
-            List of results.
-
+        List[T]: Results from all jobs in input order.
     """
     semaphore = asyncio.Semaphore(workers)
 

@@ -26,6 +26,20 @@ dev_notebooks/
 **/storage/*.json
 **/storage/*.pickle
 
+# Ruff cache
+.ruff_cache/
+
+# Benchmark / profiling
+.benchmarks/
+benchmark_results/
+*.prof
+*.lprof
+
+# Editor swap / backup files
+*.swp
+*.swo
+*~
+*.orig
 
 # Other
 llamaindex_registry.txt
@@ -43,7 +57,4 @@ llama-index-core/llama_index/core/_static
 **/coverage.xml
 **/*.egg-info/
 
-**/*.egg-info/
-**/.coverage
-**/coverage.xml
-\nstorage/
+storage/

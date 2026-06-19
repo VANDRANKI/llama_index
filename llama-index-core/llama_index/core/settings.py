@@ -1,3 +1,22 @@
+"""Global settings singleton for LlamaIndex.
+
+This module exposes a single :data:`Settings` object that acts as a
+process-wide registry for the core components used by LlamaIndex:
+the LLM, embedding model, callback manager, tokenizer, node parser,
+prompt helper, and transformation pipeline.
+
+All attributes are lazily initialized on first access so that importing
+this module does not trigger heavy dependency loading.
+
+Typical usage::
+
+    from llama_index.core import Settings
+    from llama_index.core.llms import OpenAI
+
+    Settings.llm = OpenAI(model="gpt-4o")
+    Settings.chunk_size = 512
+"""
+
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
@@ -16,7 +35,50 @@ from llama_index.core.utils import get_tokenizer, set_global_tokenizer
 
 @dataclass
 class _Settings:
-    """Settings for the Llama Index, lazily initialized."""
+    """Lazily-initialized container for process-wide LlamaIndex configuration.
+
+    Do **not** instantiate this class directly.  Use the module-level
+    :data:`Settings` singleton instead.
+
+    All private attributes (``_llm``, ``_embed_model``, etc.) start as
+    ``None`` and are populated on the first property access.  This avoids
+    importing optional dependencies (e.g. ``openai``, ``transformers``) until
+    they are actually needed.
+
+    Properties
+    ----------
+    llm : LLM
+        Language model used for completions, chat, and structured output.
+        Defaults to the model resolved by ``resolve_llm("default")``.
+    embed_model : BaseEmbedding
+        Embedding model used by vector store integrations.
+        Defaults to the model resolved by ``resolve_embed_model("default")``.
+    callback_manager : CallbackManager
+        Shared callback manager propagated to the LLM, embedding model, and
+        node parser when they are accessed.
+    tokenizer : Callable[[str], list]
+        Token-counting callable used by the prompt helper and text splitters.
+    node_parser : NodeParser
+        Text chunking component.  Defaults to :class:`SentenceSplitter`.
+    chunk_size : int
+        Shortcut for ``node_parser.chunk_size``.  Raises ``ValueError`` if the
+        configured node parser does not expose ``chunk_size``.
+    chunk_overlap : int
+        Shortcut for ``node_parser.chunk_overlap``.  Raises ``ValueError`` if
+        the configured node parser does not expose ``chunk_overlap``.
+    text_splitter : NodeParser
+        Alias for :attr:`node_parser`.
+    prompt_helper : PromptHelper
+        Helper that enforces context-window and output-token constraints when
+        building prompts.
+    num_output : int
+        Shortcut for ``prompt_helper.num_output``.
+    context_window : int
+        Shortcut for ``prompt_helper.context_window``.
+    transformations : list[TransformComponent]
+        Ingestion pipeline transformation steps.  Defaults to
+        ``[node_parser]``.
+    """
 
     # lazy initialization
     _llm: Optional[LLM] = None
@@ -118,7 +180,13 @@ class _Settings:
 
     @tokenizer.setter
     def tokenizer(self, tokenizer: Callable[[str], List[Any]]) -> None:
-        """Set the tokenizer."""
+        """Set the tokenizer.
+
+        When a HuggingFace ``PreTrainedTokenizerBase`` is passed, it is
+        automatically wrapped with ``partial(tokenizer.encode,
+        add_special_tokens=False)`` so callers receive a plain list of
+        token IDs rather than a ``BatchEncoding``.
+        """
         try:
             from transformers import PreTrainedTokenizerBase  # pants: no-infer-dep
 

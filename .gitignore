@@ -1,6 +1,7 @@
 # Build
 .pants.d/
 dist/
+build/
 .docs-preview/
 migration_scripts/
 /uv.lock
@@ -17,15 +18,34 @@ migration_scripts/
 # Local development
 venv/
 .venv/
-.ipynb_checkpoints
+.ipynb_checkpoints/
 .__pycache__
-__pycache__
+__pycache__/
+*.pyc
+*.pyo
 dev_notebooks/
+
+# Python artifacts
+*.egg-info/
+**/*.egg-info/
+
+# Type checkers and linters
+.mypy_cache/
+.ruff_cache/
 
 # test cruft
 **/storage/*.json
 **/storage/*.pickle
 
+# Coverage
+**/.coverage
+**/coverage.xml
+
+# Databases / vector stores
+*.sqlite3
+*.db
+chroma_db/
+storage/
 
 # Other
 llamaindex_registry.txt
@@ -35,15 +55,4 @@ credentials.json
 token.json
 .python-version
 .DS_Store
-*.sqlite3
-*.db
 llama-index-core/llama_index/core/_static
-
-**/.coverage
-**/coverage.xml
-**/*.egg-info/
-
-**/*.egg-info/
-**/.coverage
-**/coverage.xml
-\nstorage/

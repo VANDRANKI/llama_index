@@ -1,4 +1,9 @@
-"""Async utils."""
+"""Async utilities for running coroutines and managing concurrency.
+
+This module provides helpers for running asyncio coroutines from both
+synchronous and asynchronous contexts, batching coroutine execution,
+and throttling concurrency with a semaphore-based worker pool.
+"""
 
 import asyncio
 import contextvars
@@ -12,6 +17,22 @@ dispatcher = instrument.get_dispatcher(__name__)
 
 
 def get_asyncio_module(show_progress: bool = False) -> Any:
+    """Return the asyncio module or its tqdm-wrapped equivalent.
+
+    When *show_progress* is ``True`` the function imports
+    ``tqdm.asyncio.tqdm_asyncio`` and returns it in place of the
+    standard :mod:`asyncio` module so that callers can swap in progress
+    reporting with minimal code changes.
+
+    Args:
+        show_progress: If ``True``, return ``tqdm.asyncio.tqdm_asyncio``
+            instead of the standard :mod:`asyncio` module.
+
+    Returns:
+        Either ``tqdm.asyncio.tqdm_asyncio`` (when *show_progress* is
+        ``True``) or the built-in :mod:`asyncio` module.
+
+    """
     if show_progress:
         from tqdm.asyncio import tqdm_asyncio
 
@@ -113,6 +134,25 @@ def run_async_tasks(
 
 
 def chunks(iterable: Iterable, size: int) -> Iterable:
+    """Split *iterable* into consecutive chunks of length *size*.
+
+    The last chunk may be shorter than *size* if the iterable length is
+    not evenly divisible.  Internally uses :func:`itertools.zip_longest`
+    with ``fillvalue=None``, so callers should filter ``None`` sentinels
+    when the fill value matters.
+
+    Args:
+        iterable: Any iterable to be chunked.
+        size: Maximum number of elements per chunk.
+
+    Yields:
+        Tuples of at most *size* elements from *iterable*.
+
+    Example:
+        >>> list(chunks([1, 2, 3, 4, 5], 2))
+        [(1, 2), (3, 4), (5, None)]
+
+    """
     args = [iter(iterable)] * size
     return zip_longest(*args, fillvalue=None)
 
@@ -120,6 +160,25 @@ def chunks(iterable: Iterable, size: int) -> Iterable:
 async def batch_gather(
     tasks: List[Coroutine], batch_size: int = 10, verbose: bool = False
 ) -> List[Any]:
+    """Gather coroutines in sequential batches to limit peak concurrency.
+
+    Unlike :func:`asyncio.gather` which launches all coroutines at once,
+    this helper divides *tasks* into batches of *batch_size* and awaits
+    each batch before starting the next.  This is useful when the total
+    number of coroutines is large and unbounded concurrency would exhaust
+    connection pools or hit API rate limits.
+
+    Args:
+        tasks: Coroutines to execute.
+        batch_size: Maximum number of coroutines running concurrently at
+            any given time.  Defaults to 10.
+        verbose: If ``True``, print a progress message after each batch
+            completes.
+
+    Returns:
+        A flat list of results in the same order as *tasks*.
+
+    """
     output: List[Any] = []
     for task_chunk in chunks(tasks, batch_size):
         task_chunk = (task for task in task_chunk if task is not None)

@@ -1,4 +1,10 @@
-"""Base retriever."""
+"""Abstract base class for all retrievers in LlamaIndex.
+
+A retriever accepts a natural-language query and returns a ranked list of
+:class:`~llama_index.core.schema.NodeWithScore` objects drawn from an
+underlying index or document store.  Sub-classes implement :meth:`_retrieve`
+and optionally :meth:`_aretrieve` for async operation.
+"""
 
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional
@@ -32,7 +38,27 @@ dispatcher = instrument.get_dispatcher(__name__)
 
 
 class BaseRetriever(PromptMixin, DispatcherSpanMixin):
-    """Base retriever."""
+    """Abstract base class for LlamaIndex retrievers.
+
+    A retriever maps a query to a list of relevant
+    :class:`~llama_index.core.schema.NodeWithScore` objects.  The class
+    handles callback tracing, object-map lookups, and recursive retrieval
+    (i.e. ``IndexNode`` objects that point to nested retrievers or query
+    engines); sub-classes only need to implement :meth:`_retrieve`.
+
+    Args:
+        callback_manager: Optional :class:`CallbackManager` used to emit
+            trace events.  Defaults to an empty manager.
+        object_map: An optional mapping from ``index_id`` strings to
+            arbitrary retrievable objects.  Used for recursive retrieval
+            when an ``IndexNode`` does not carry its object inline.
+        objects: An optional list of :class:`IndexNode` objects whose
+            ``obj`` attributes are registered in *object_map* automatically.
+            Mutually exclusive with supplying *object_map* directly.
+        verbose: If ``True``, print diagnostic messages during recursive
+            retrieval to aid debugging.
+
+    """
 
     def __init__(
         self,
@@ -50,20 +76,24 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
         self._verbose = verbose
 
     def _check_callback_manager(self) -> None:
-        """Check callback manager."""
+        """Ensure *callback_manager* is set, falling back to the global one.
+
+        This guard is needed because some code paths instantiate retrievers
+        without calling ``super().__init__``, leaving the attribute unset.
+        """
         if not hasattr(self, "callback_manager"):
             self.callback_manager = Settings.callback_manager
 
     def _get_prompts(self) -> PromptDictType:
-        """Get prompts."""
+        """Return configurable prompt templates (empty by default)."""
         return {}
 
     def _get_prompt_modules(self) -> PromptMixinType:
-        """Get prompt modules."""
+        """Return sub-modules that expose their own prompts (empty by default)."""
         return {}
 
     def _update_prompts(self, prompts: PromptDictType) -> None:
-        """Update prompts."""
+        """Apply updated prompts (no-op by default)."""
 
     def _retrieve_from_object(
         self,
@@ -71,7 +101,29 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
         query_bundle: QueryBundle,
         score: float,
     ) -> List[NodeWithScore]:
-        """Retrieve nodes from object."""
+        """Dispatch retrieval to a nested retrievable object.
+
+        Handles four cases:
+
+        * :class:`NodeWithScore` — returned as-is.
+        * :class:`BaseNode` — wrapped in a :class:`NodeWithScore`.
+        * :class:`BaseQueryEngine` — queried synchronously; the response
+          string becomes a :class:`TextNode`.
+        * :class:`BaseRetriever` — its :meth:`retrieve` method is called
+          recursively.
+
+        Args:
+            obj: The object to retrieve from.
+            query_bundle: The active query.
+            score: Relevance score to assign when wrapping plain nodes.
+
+        Returns:
+            A list of :class:`NodeWithScore` instances.
+
+        Raises:
+            ValueError: If *obj* is not a recognised retrievable type.
+
+        """
         if self._verbose:
             print_text(
                 f"Retrieving from object {obj.__class__.__name__} with query {query_bundle.query_str}\n",
@@ -100,7 +152,20 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
         query_bundle: QueryBundle,
         score: float,
     ) -> List[NodeWithScore]:
-        """Retrieve nodes from object."""
+        """Async counterpart of :meth:`_retrieve_from_object`.
+
+        Args:
+            obj: The object to retrieve from.
+            query_bundle: The active query.
+            score: Relevance score to assign when wrapping plain nodes.
+
+        Returns:
+            A list of :class:`NodeWithScore` instances.
+
+        Raises:
+            ValueError: If *obj* is not a recognised retrievable type.
+
+        """
         if isinstance(obj, NodeWithScore):
             return [obj]
         elif isinstance(obj, BaseNode):
@@ -121,6 +186,25 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
     def _handle_recursive_retrieval(
         self, query_bundle: QueryBundle, nodes: List[NodeWithScore]
     ) -> List[NodeWithScore]:
+        """Expand ``IndexNode`` placeholders into their underlying nodes.
+
+        For each node in *nodes*, if the node is an :class:`IndexNode`, this
+        method looks up the corresponding object in :attr:`object_map` (or
+        uses the inline ``obj`` attribute) and recursively retrieves from it.
+        Plain :class:`TextNode` or :class:`ImageNode` objects are passed
+        through unchanged.
+
+        Duplicate nodes (same ``node_id``) are removed from the output while
+        preserving insertion order.
+
+        Args:
+            query_bundle: The active query, forwarded to nested retrieval.
+            nodes: Raw nodes returned by :meth:`_retrieve`.
+
+        Returns:
+            A de-duplicated list of :class:`NodeWithScore` instances.
+
+        """
         retrieved_nodes: List[NodeWithScore] = []
         for n in nodes:
             node = n.node
@@ -155,6 +239,19 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
     async def _ahandle_recursive_retrieval(
         self, query_bundle: QueryBundle, nodes: List[NodeWithScore]
     ) -> List[NodeWithScore]:
+        """Async counterpart of :meth:`_handle_recursive_retrieval`.
+
+        Expands ``IndexNode`` placeholders using async dispatch and removes
+        duplicate nodes from the result.
+
+        Args:
+            query_bundle: The active query, forwarded to nested retrieval.
+            nodes: Raw nodes returned by :meth:`_aretrieve`.
+
+        Returns:
+            A de-duplicated list of :class:`NodeWithScore` instances.
+
+        """
         retrieved_nodes: List[NodeWithScore] = []
         for n in nodes:
             node = n.node
@@ -190,12 +287,18 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
 
     @dispatcher.span
     def retrieve(self, str_or_query_bundle: QueryType) -> List[NodeWithScore]:
-        """
-        Retrieve nodes given query.
+        """Retrieve nodes given a query (synchronous).
+
+        Wraps :meth:`_retrieve` with callback tracing, recursive
+        ``IndexNode`` expansion, and instrumentation events.  Prefer
+        :meth:`aretrieve` in async contexts.
 
         Args:
-            str_or_query_bundle (QueryType): Either a query string or
-                a QueryBundle object.
+            str_or_query_bundle: Either a plain query string or a
+                :class:`QueryBundle`.
+
+        Returns:
+            A list of :class:`NodeWithScore` objects ordered by relevance.
 
         """
         self._check_callback_manager()
@@ -228,6 +331,20 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
 
     @dispatcher.span
     async def aretrieve(self, str_or_query_bundle: QueryType) -> List[NodeWithScore]:
+        """Retrieve nodes given a query (async).
+
+        Async counterpart of :meth:`retrieve`.  Wraps :meth:`_aretrieve`
+        with callback tracing, recursive ``IndexNode`` expansion, and
+        instrumentation events.
+
+        Args:
+            str_or_query_bundle: Either a plain query string or a
+                :class:`QueryBundle`.
+
+        Returns:
+            A list of :class:`NodeWithScore` objects ordered by relevance.
+
+        """
         self._check_callback_manager()
 
         dispatcher.event(
@@ -261,20 +378,35 @@ class BaseRetriever(PromptMixin, DispatcherSpanMixin):
 
     @abstractmethod
     def _retrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
-        """
-        Retrieve nodes given query.
+        """Retrieve nodes given a query (synchronous, to be implemented).
 
-        Implemented by the user.
+        Sub-classes must implement this method.  It should perform the
+        actual index lookup and return scored nodes.  Callback tracing and
+        recursive expansion are handled by the public :meth:`retrieve`
+        wrapper.
+
+        Args:
+            query_bundle: The parsed query object.
+
+        Returns:
+            A list of :class:`NodeWithScore` objects.
 
         """
 
     # TODO: make this abstract
     # @abstractmethod
     async def _aretrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
-        """
-        Asynchronously retrieve nodes given query.
+        """Retrieve nodes given a query (async, to be implemented).
 
-        Implemented by the user.
+        The default implementation delegates to the synchronous
+        :meth:`_retrieve`.  Sub-classes with a native async backend should
+        override this method to avoid blocking the event loop.
+
+        Args:
+            query_bundle: The parsed query object.
+
+        Returns:
+            A list of :class:`NodeWithScore` objects.
 
         """
         return self._retrieve(query_bundle)

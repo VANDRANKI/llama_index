@@ -19,18 +19,42 @@ venv/
 .venv/
 .ipynb_checkpoints
 .__pycache__
-__pycache__
+__pycache__/
 dev_notebooks/
 
-# test cruft
+# Test cruft
 **/storage/*.json
 **/storage/*.pickle
 
+# Python cache and compiled files
+*.pyc
+*.pyo
+
+# Coverage and test reports
+**/.coverage
+.coverage.*
+**/coverage.xml
+htmlcov/
+
+# Linter and type-checker caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Build and distribution artifacts
+**/*.egg-info/
+*.egg-info/
+build/
+
+# Hypothesis
+.hypothesis/
 
 # Other
 llamaindex_registry.txt
 packages_to_bump_deduped.txt
 .env
+.env.local
+.env.test
 credentials.json
 token.json
 .python-version
@@ -39,11 +63,4 @@ token.json
 *.db
 llama-index-core/llama_index/core/_static
 
-**/.coverage
-**/coverage.xml
-**/*.egg-info/
-
-**/*.egg-info/
-**/.coverage
-**/coverage.xml
-\nstorage/
+storage/

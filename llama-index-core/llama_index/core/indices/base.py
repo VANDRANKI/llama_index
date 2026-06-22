@@ -23,13 +23,41 @@ logger = logging.getLogger(__name__)
 
 
 class BaseIndex(Generic[IS], ABC):
-    """
-    Base LlamaIndex.
+    """Abstract base class for all LlamaIndex index types.
+
+    An index ingests documents (or pre-split nodes), builds an internal
+    ``IndexStruct`` (e.g. a vector store, keyword table, or graph), and
+    exposes query and chat engine factories.  Concrete implementations must
+    override at least ``_build_index_from_nodes``, ``_insert``,
+    ``_delete_node``, ``as_retriever``, and ``ref_doc_info``.
 
     Args:
-        nodes (List[Node]): List of nodes to index
-        show_progress (bool): Whether to show tqdm progress bars. Defaults to False.
+        nodes (Optional[Sequence[BaseNode]]): List of pre-split nodes to
+            index.  Mutually exclusive with ``index_struct``.
+        objects (Optional[Sequence[IndexNode]]): List of ``IndexNode``
+            objects to index.  Their ``obj`` payloads are cleared before
+            storage to avoid serialisation issues.
+        index_struct (Optional[IS]): A previously built ``IndexStruct`` to
+            restore from.  Mutually exclusive with ``nodes``.
+        storage_context (Optional[StorageContext]): Storage backend
+            (docstore, vector store, graph store, index store).  Defaults to
+            an in-memory ``StorageContext``.
+        callback_manager (Optional[CallbackManager]): Callback manager for
+            trace events emitted during index construction and queries.
+        transformations (Optional[List[TransformComponent]]): Node
+            transformation pipeline applied when inserting new documents.
+            Defaults to ``Settings.transformations``.
+        show_progress (bool): Whether to display ``tqdm`` progress bars
+            during bulk operations.  Defaults to ``False``.
+        **kwargs: Additional keyword arguments forwarded to
+            ``build_index_from_nodes``.
 
+    Raises:
+        ValueError: If none of ``nodes``, ``objects``, or ``index_struct``
+            is provided.
+        ValueError: If both ``nodes`` and ``index_struct`` are provided.
+        ValueError: If ``nodes`` contains ``Document`` objects instead of
+            ``Node`` objects (hint: use :meth:`from_documents` instead).
     """
 
     index_struct_cls: Type[IS]
@@ -98,10 +126,30 @@ class BaseIndex(Generic[IS], ABC):
         """
         Create index from documents.
 
-        Args:
-            documents (Sequence[Document]]): List of documents to
-                build the index from.
+        Runs ``documents`` through the transformation pipeline (chunking,
+        metadata extraction, embedding, etc.) and then builds the index from
+        the resulting nodes.  This is the recommended entry-point for most
+        users — pass raw ``Document`` objects here rather than to the
+        constructor.
 
+        Args:
+            documents (Sequence[Document]): List of documents to
+                build the index from.
+            storage_context (Optional[StorageContext]): Storage backend to
+                use.  Defaults to a fresh in-memory ``StorageContext``.
+            show_progress (bool): Display a progress bar during the
+                transformation pipeline.  Defaults to ``False``.
+            callback_manager (Optional[CallbackManager]): Callback manager
+                for trace events.  Defaults to ``Settings.callback_manager``.
+            transformations (Optional[List[TransformComponent]]): Override
+                the global transformation pipeline.  Defaults to
+                ``Settings.transformations``.
+            **kwargs: Extra keyword arguments forwarded to the index
+                constructor.
+
+        Returns:
+            IndexType: A fully constructed index of the same concrete type
+                as the class this method is called on.
         """
         storage_context = storage_context or StorageContext.from_defaults()
         docstore = storage_context.docstore
@@ -164,10 +212,12 @@ class BaseIndex(Generic[IS], ABC):
 
     @property
     def storage_context(self) -> StorageContext:
+        """Get the storage context backing this index."""
         return self._storage_context
 
     @property
     def summary(self) -> str:
+        """Get the textual summary stored on the index struct."""
         return str(self._index_struct.summary)
 
     @summary.setter
@@ -179,21 +229,57 @@ class BaseIndex(Generic[IS], ABC):
     def _build_index_from_nodes(
         self, nodes: Sequence[BaseNode], **build_kwargs: Any
     ) -> IS:
-        """Build the index from nodes."""
+        """Build the index from nodes.
+
+        Args:
+            nodes (Sequence[BaseNode]): Nodes to index.
+            **build_kwargs: Implementation-specific keyword arguments.
+
+        Returns:
+            IS: The populated ``IndexStruct``.
+        """
 
     def build_index_from_nodes(
         self, nodes: Sequence[BaseNode], **build_kwargs: Any
     ) -> IS:
-        """Build the index from nodes."""
+        """Add nodes to the docstore and build the index struct.
+
+        This is the public wrapper around ``_build_index_from_nodes`` that
+        ensures all nodes are persisted to the docstore before indexing.
+
+        Args:
+            nodes (Sequence[BaseNode]): Nodes to add and index.
+            **build_kwargs: Forwarded to the concrete
+                ``_build_index_from_nodes`` implementation.
+
+        Returns:
+            IS: The populated ``IndexStruct``.
+        """
         self._docstore.add_documents(nodes, allow_update=True)
         return self._build_index_from_nodes(nodes, **build_kwargs)
 
     @abstractmethod
     def _insert(self, nodes: Sequence[BaseNode], **insert_kwargs: Any) -> None:
-        """Index-specific logic for inserting nodes to the index struct."""
+        """Index-specific logic for inserting nodes to the index struct.
+
+        Args:
+            nodes (Sequence[BaseNode]): Nodes to insert into the index
+                struct.
+            **insert_kwargs: Implementation-specific keyword arguments.
+        """
 
     def insert_nodes(self, nodes: Sequence[BaseNode], **insert_kwargs: Any) -> None:
-        """Insert nodes."""
+        """Insert nodes into the index.
+
+        Persists nodes to the docstore, calls the concrete ``_insert``
+        implementation, and then flushes the updated index struct to the
+        index store.
+
+        Args:
+            nodes (Sequence[BaseNode]): Nodes to insert.
+            **insert_kwargs: Forwarded to the concrete ``_insert``
+                implementation.
+        """
         for node in nodes:
             if isinstance(node, IndexNode):
                 try:
@@ -210,7 +296,17 @@ class BaseIndex(Generic[IS], ABC):
     async def ainsert_nodes(
         self, nodes: Sequence[BaseNode], **insert_kwargs: Any
     ) -> None:
-        """Asynchronously insert nodes."""
+        """Asynchronously insert nodes into the index.
+
+        The async counterpart to :meth:`insert_nodes`.  Persists nodes to the
+        docstore asynchronously, delegates to the (synchronous) ``_insert``
+        implementation, and then flushes the updated index struct.
+
+        Args:
+            nodes (Sequence[BaseNode]): Nodes to insert.
+            **insert_kwargs: Forwarded to the concrete ``_insert``
+                implementation.
+        """
         for node in nodes:
             if isinstance(node, IndexNode):
                 try:
@@ -227,7 +323,16 @@ class BaseIndex(Generic[IS], ABC):
             )
 
     def insert(self, document: Document, **insert_kwargs: Any) -> None:
-        """Insert a document."""
+        """Insert a document.
+
+        Runs the document through the configured transformation pipeline
+        (producing nodes) and then calls :meth:`insert_nodes`.
+
+        Args:
+            document (Document): The document to insert.
+            **insert_kwargs: Forwarded through to :meth:`insert_nodes` and
+                the underlying ``_insert`` implementation.
+        """
         with self._callback_manager.as_trace("insert"):
             nodes = run_transformations(
                 [document],
@@ -240,7 +345,17 @@ class BaseIndex(Generic[IS], ABC):
             self.docstore.set_document_hash(document.id_, document.hash)
 
     async def ainsert(self, document: Document, **insert_kwargs: Any) -> None:
-        """Asynchronously insert a document."""
+        """Asynchronously insert a document.
+
+        The async counterpart to :meth:`insert`.  Runs the document through
+        the transformation pipeline asynchronously and then inserts the
+        resulting nodes.
+
+        Args:
+            document (Document): The document to insert.
+            **insert_kwargs: Forwarded through to :meth:`ainsert_nodes` and
+                the underlying ``_insert`` implementation.
+        """
         with self._callback_manager.as_trace("ainsert"):
             nodes = await arun_transformations(
                 [document],
@@ -254,7 +369,12 @@ class BaseIndex(Generic[IS], ABC):
 
     @abstractmethod
     def _delete_node(self, node_id: str, **delete_kwargs: Any) -> None:
-        """Delete a node."""
+        """Delete a node.
+
+        Args:
+            node_id (str): ID of the node to delete.
+            **delete_kwargs: Implementation-specific keyword arguments.
+        """
 
     def delete_nodes(
         self,
@@ -265,9 +385,17 @@ class BaseIndex(Generic[IS], ABC):
         """
         Delete a list of nodes from the index.
 
-        Args:
-            doc_ids (List[str]): A list of doc_ids from the nodes to delete
+        Iterates over the provided node IDs, calls the concrete
+        ``_delete_node`` for each, and flushes the updated index struct
+        to the index store.
 
+        Args:
+            node_ids (List[str]): A list of node IDs to delete from the index
+                struct.
+            delete_from_docstore (bool): If ``True``, also remove each node
+                from the underlying docstore.  Defaults to ``False``.
+            **delete_kwargs: Forwarded to the concrete ``_delete_node``
+                implementation.
         """
         for node_id in node_ids:
             self._delete_node(node_id, **delete_kwargs)
@@ -285,9 +413,15 @@ class BaseIndex(Generic[IS], ABC):
         """
         Asynchronously delete a list of nodes from the index.
 
-        Args:
-            doc_ids (List[str]): A list of doc_ids from the nodes to delete
+        The async counterpart to :meth:`delete_nodes`.
 
+        Args:
+            node_ids (List[str]): A list of node IDs to delete.
+            delete_from_docstore (bool): If ``True``, also remove each node
+                from the underlying docstore asynchronously.  Defaults to
+                ``False``.
+            **delete_kwargs: Forwarded to the concrete ``_delete_node``
+                implementation.
         """
         for node_id in node_ids:
             self._delete_node(node_id, **delete_kwargs)
@@ -317,7 +451,18 @@ class BaseIndex(Generic[IS], ABC):
     def delete_ref_doc(
         self, ref_doc_id: str, delete_from_docstore: bool = False, **delete_kwargs: Any
     ) -> None:
-        """Delete a document and it's nodes by using ref_doc_id."""
+        """Delete a document and its nodes by using ref_doc_id.
+
+        Looks up the node IDs associated with ``ref_doc_id`` in the docstore
+        and then calls :meth:`delete_nodes`.  If ``ref_doc_id`` is not found,
+        a warning is logged and the method returns without error.
+
+        Args:
+            ref_doc_id (str): The reference document ID to delete.
+            delete_from_docstore (bool): If ``True``, also remove the
+                document entry from the docstore.  Defaults to ``False``.
+            **delete_kwargs: Forwarded to :meth:`delete_nodes`.
+        """
         ref_doc_info = self.docstore.get_ref_doc_info(ref_doc_id)
         if ref_doc_info is None:
             logger.warning(f"ref_doc_id {ref_doc_id} not found, nothing deleted.")
@@ -335,7 +480,17 @@ class BaseIndex(Generic[IS], ABC):
     async def adelete_ref_doc(
         self, ref_doc_id: str, delete_from_docstore: bool = False, **delete_kwargs: Any
     ) -> None:
-        """Delete a document and it's nodes by using ref_doc_id."""
+        """Asynchronously delete a document and its nodes by using ref_doc_id.
+
+        The async counterpart to :meth:`delete_ref_doc`.
+
+        Args:
+            ref_doc_id (str): The reference document ID to delete.
+            delete_from_docstore (bool): If ``True``, also remove the
+                document entry from the docstore asynchronously.  Defaults
+                to ``False``.
+            **delete_kwargs: Forwarded to :meth:`adelete_nodes`.
+        """
         ref_doc_info = await self.docstore.aget_ref_doc_info(ref_doc_id)
         if ref_doc_info is None:
             logger.warning(f"ref_doc_id {ref_doc_id} not found, nothing deleted.")
@@ -432,9 +587,22 @@ class BaseIndex(Generic[IS], ABC):
         """
         Refresh an index with documents that have changed.
 
-        This allows users to save LLM and Embedding model calls, while only
-        updating documents that have any changes in text or metadata. It
-        will also insert any documents that previously were not stored.
+        Iterates over ``documents``, checks each document's hash against the
+        stored hash, and inserts or updates only those that are new or have
+        changed.  Returns a boolean list indicating which documents were
+        refreshed.
+
+        Args:
+            documents (Sequence[Document]): Full list of documents to
+                compare against what is currently stored in the index.
+            **update_kwargs: Keyword arguments forwarded to :meth:`insert`
+                (under the key ``"insert_kwargs"``) and
+                :meth:`update_ref_doc` (under ``"update_kwargs"``).
+
+        Returns:
+            List[bool]: A list of the same length as ``documents`` where
+                ``True`` means the corresponding document was inserted or
+                updated, and ``False`` means it was unchanged.
         """
         with self._callback_manager.as_trace("refresh_ref_docs"):
             refreshed_documents = [False] * len(documents)
@@ -457,9 +625,20 @@ class BaseIndex(Generic[IS], ABC):
         """
         Asynchronously refresh an index with documents that have changed.
 
-        This allows users to save LLM and Embedding model calls, while only
-        updating documents that have any changes in text or metadata. It
-        will also insert any documents that previously were not stored.
+        The async counterpart to :meth:`refresh_ref_docs`.  Checks each
+        document's hash asynchronously and inserts or updates only those
+        that are new or have changed.
+
+        Args:
+            documents (Sequence[Document]): Full list of documents to
+                compare against what is currently stored in the index.
+            **update_kwargs: Keyword arguments forwarded to
+                :meth:`ainsert` and :meth:`aupdate_ref_doc`.
+
+        Returns:
+            List[bool]: A list of the same length as ``documents`` where
+                ``True`` means the corresponding document was inserted or
+                updated.
         """
         with self._callback_manager.as_trace("arefresh_ref_docs"):
             refreshed_documents = [False] * len(documents)
@@ -486,7 +665,17 @@ class BaseIndex(Generic[IS], ABC):
         ...
 
     @abstractmethod
-    def as_retriever(self, **kwargs: Any) -> BaseRetriever: ...
+    def as_retriever(self, **kwargs: Any) -> BaseRetriever:
+        """Build and return a retriever backed by this index.
+
+        Args:
+            **kwargs: Retriever-specific configuration keyword arguments
+                (e.g. ``similarity_top_k``).
+
+        Returns:
+            BaseRetriever: A retriever that fetches nodes from this index.
+        """
+        ...
 
     def as_query_engine(
         self, llm: Optional[LLMType] = None, **kwargs: Any
@@ -494,8 +683,21 @@ class BaseIndex(Generic[IS], ABC):
         """
         Convert the index to a query engine.
 
-        Calls `index.as_retriever(**kwargs)` to get the retriever and then wraps it in a
-        `RetrieverQueryEngine.from_args(retriever, **kwrags)` call.
+        Calls :meth:`as_retriever` to obtain a retriever and wraps it in a
+        ``RetrieverQueryEngine``.  The LLM used for response synthesis can be
+        overridden via the ``llm`` parameter; otherwise ``Settings.llm`` is
+        used.
+
+        Args:
+            llm (Optional[LLMType]): Override the language model used for
+                response synthesis.  Accepts any value supported by
+                ``resolve_llm`` (string model name, ``LLM`` instance, etc.).
+                Defaults to ``Settings.llm``.
+            **kwargs: Forwarded to :meth:`as_retriever` and to
+                ``RetrieverQueryEngine.from_args``.
+
+        Returns:
+            BaseQueryEngine: A ``RetrieverQueryEngine`` backed by this index.
         """
         # NOTE: lazy import
         from llama_index.core.query_engine.retriever_query_engine import (
@@ -524,7 +726,7 @@ class BaseIndex(Generic[IS], ABC):
         """
         Convert the index to a chat engine.
 
-        Calls `index.as_query_engine(llm=llm, **kwargs)` to get the query engine and then
+        Calls ``index.as_query_engine(llm=llm, **kwargs)`` to get the query engine and then
         wraps it in a chat engine based on the chat mode.
 
         Chat modes:

@@ -1,49 +1,65 @@
-# Build
-.pants.d/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
 dist/
-.docs-preview/
-migration_scripts/
-/uv.lock
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Distribution / packaging
+*.tar.gz
+*.whl
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Linting
+.ruff_cache/
 
 # IDEs
-.idea
-.vscode
-.zed
-*.code-workspace
-**/.claude
-!/.claude
-/.claude/settings.local.json
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# Local development
-venv/
-.venv/
-.ipynb_checkpoints
-.__pycache__
-__pycache__
-dev_notebooks/
+# Jupyter
+.ipynb_checkpoints/
 
-# test cruft
-**/storage/*.json
-**/storage/*.pickle
-
-
-# Other
-llamaindex_registry.txt
-packages_to_bump_deduped.txt
-.env
-credentials.json
-token.json
-.python-version
+# OS
 .DS_Store
-*.sqlite3
-*.db
-llama-index-core/llama_index/core/_static
+Thumbs.db
 
-**/.coverage
-**/coverage.xml
-**/*.egg-info/
+# Secrets / credentials
+.env
+*.env.local
+secrets.json
+*.pem
+*.key
 
-**/*.egg-info/
-**/.coverage
-**/coverage.xml
-\nstorage/
+# Logs
+*.log
+logs/
+
+# LlamaIndex specific
+.llamaindex/
+storage/
+chroma_db/

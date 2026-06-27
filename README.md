@@ -6,7 +6,6 @@
 [![Discord](https://img.shields.io/discord/1059199217496772688)](https://discord.gg/dGcwcsnxhU)
 [![Twitter](https://img.shields.io/twitter/follow/llama_index)](https://x.com/llama_index)
 [![Reddit](https://img.shields.io/reddit/subreddit-subscribers/LlamaIndex?style=plastic&logo=reddit&label=r%2FLlamaIndex&labelColor=white)](https://www.reddit.com/r/LlamaIndex/)
-[![Ask AI](https://img.shields.io/badge/Phorm-Ask_AI-%23F2777A.svg?&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik00LjQzIDEuODgyYTEuNDQgMS40NCAwIDAgMS0uMDk4LjQyNmMtLjA1LjEyMy0uMTE1LjIzLS4xOTIuMzIyLS4wNzUuMDktLjE2LjE2NS0uMjU1LjIyNmExLjM1MyAxLjM1MyAwIDAgMS0uNTk1LjIxMmMtLjA5OS4wMTItLjE5Mi4wMTQtLjI3OS4wMDZsLTEuNTkzLS4xNHYtLjQwNmgxLjY1OGMuMDkuMDAxLjE3LS4xNjkuMjQ2LS4xOTFhLjYwMy42MDMgMCAwIDAgLjItLjEwNi41MjkuNTI5IDAgMCAwIC4xMzgtLjE3LjY1NC42NTQgMCAwIDAgLjA2NS0uMjRsLjAyOC0uMzJhLjkzLjkzIDAgMCAwLS4wMzYtLjI0OS41NjcuNTY3IDAgMCAwLS4xMDMtLjIuNTAyLjUwMiAwIDAgMC0uMTY4LS4xMzguNjA4LjYwOCAwIDAgMC0uMjQtLjA2N0wyLjQzNy43MjkgMS42MjUuNjcxYS4zMjIuMzIyIDAgMCAwLS4yMzIuMDU4LjM3NS4zNzUgMCAwIDAtLjExNi4yMzJsLS4xMTYgMS40NS0uMDU4LjY5Ny0uMDU4Ljc1NEwuNzA1IDRsLS4zNTctLjA3OUwuNjAyLjkwNkMuNjE3LjcyNi42NjMuNTc0LjczOS40NTRhLjk1OC45NTggMCAwIDEgLjI3NC0uMjg1Ljk3MS45NzEgMCAwIDEgLjMzNy0uMTRjLjExOS0uMDI2LjIyNy0uMDM0LjMyNS0uMDI2TDMuMjMyLjE2Yy4xNTkuMDE0LjMzNi4wMy40NTkuMDgyYTEuMTczIDEuMTczIDAgMCAxIC41NDUuNDQ3Yy4wNi4wOTQuMTA5LjE5Mi4xNDQuMjkzYTEuMzkyIDEuMzkyIDAgMCAxIC4wNzguNThsLS4wMjkuMzJaIiBmaWxsPSIjRjI3NzdBIi8+CiAgPHBhdGggZD0iTTQuMDgyIDIuMDA3YTEuNDU1IDEuNDU1IDAgMCAxLS4wOTguNDI3Yy0uMDUuMTI0LS4xMTQuMjMyLS4xOTIuMzI0YTEuMTMgMS4xMyAwIDAgMS0uMjU0LjIyNyAxLjM1MyAxLjM1MyAwIDAgMS0uNTk1LjIxNGMtLjEuMDEyLS4xOTMuMDE0LS4yOC4wMDZsLTEuNTYtLjEwOC4wMzQtLjQwNi4wMy0uMzQ4IDEuNTU5LjE1NGMuMDkgMCAuMTczLS4wMS4yNDgtLjAzM2EuNjAzLjYwMyAwIDAgMCAuMi0uMTA2LjUzMi41MzIgMCAwIDAgLjEzOS0uMTcyLjY2LjY2IDAgMCAwIC4wNjQtLjI0MWwuMDI5LS4zMjFhLjk0Ljk0IDAgMCAwLS4wMzYtLjI1LjU3LjU3IDAgMCAwLS4xMDMtLjIwMi41MDIuNTAyIDAgMCAwLS4xNjgtLjEzOC42MDUuNjA1IDAgMCAwLS4yNC0uMDY3TDEuMjczLjgyN2MtLjA5NC0uMDA4LS4xNjguMDEtLjIyMS4wNTUtLjA1My4wNDUtLjA4NC4xMTQtLjA5Mi4yMDZMLjcwNSA0IDAgMy45MzhsLjI1NS0yLjkxMUExLjAxIDEuMDEgMCAwIDEgLjM5My41NzIuOTYyLjk2MiAwIDAgMSAuNjY2LjI4NmEuOTcuOTcgMCAwIDEgLjMzOC0uMTRDMS4xMjIuMTIgMS4yMy4xMSAxLjMyOC4xMTlsMS41OTMuMTRjLjE2LjAxNC4zLjA0Ny40MjMuMWExLjE3IDEuMTcgMCAwIDEgLjU0NS40NDhjLjA2MS4wOTUuMTA5LjE5My4xNDQuMjk1YTEuNDA2IDEuNDA2IDAgMCAxIC4wNzcuNTgzbC0uMDI4LjMyMloiIGZpbGw9IndoaXRlIi8+CiAgPHBhdGggZD0iTTQuMDgyIDIuMDA3YTEuNDU1IDEuNDU1IDAgMCAxLS4wOTguNDI3Yy0uMDUuMTI0LS4xMTQuMjMyLS4xOTIuMzI0YTEuMTMgMS4xMyAwIDAgMS0uMjU0LjIyNyAxLjM1MyAxLjM1MyAwIDAgMS0uNTk1LjIxNGMtLjEuMDEyLS4xOTMuMDE0LS4yOC4wMDZsLTEuNTYtLjEwOC4wMzQtLjQwNi4wMy0uMzQ4IDEuNTU5LjE1NGMuMDkgMCAuMTczLS4wMS4yNDgtLjAzM2EuNjAzLjYwMyAwIDAgMCAuMi0uMTA2LjUzMi41MzIgMCAwIDAgLjEzOS0uMTcyLjY2LjY2IDAgMCAwIC4wNjQtLjI0MWwuMDI5LS4zMjFhLjk0Ljk0IDAgMCAwLS4wMzYtLjI1LjU3LjU3IDAgMCAwLS4xMDMtLjIwMi41MDIuNTAyIDAgMCAwLS4xNjgtLjEzOC42MDUuNjA1IDAgMCAwLS4yNC0uMDY3TDEuMjczLjgyN2MtLjA5NC0uMDA4LS4xNjguMDEtLjIyMS4wNTUtLjA1My4wNDUtLjA4NC4xMTQtLjA5Mi4yMDZMLjcwNSA0IDAgMy45MzhsLjI1NS0yLjkxMUExLjAxIDEuMDEgMCAwIDEgLjM5My41NzIuOTYyLjk2MiAwIDAgMSAuNjY2LjI4NmEuOTcuOTcgMCAwIDEgLjMzOC0uMTRDMS4xMjIuMTIgMS4yMy4xMSAxLjMyOC4xMTlsMS41OTMuMTRjLjE2LjAxNC4zLjA0Ny40MjMuMWExLjE3IDEuMTcgMCAwIDEgLjU0NS40NDhjLjA2MS4wOTUuMTA5LjE5My4xNDQuMjk1YTEuNDA2IDEuNDA2IDAgMCAxIC4wNzcuNTgzbC0uMDI4LjMyMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=)](https://www.phorm.ai/query?projectId=c5863b56-6703-4a5d-87b6-7e6031bf16b6)
 
 LlamaIndex OSS (by [LlamaIndex](https://llamaindex.ai?utm_medium=li_github&utm_source=github&utm_campaign=2026--)) is an open-source framework to build agentic applications. **[Parse](https://cloud.llamaindex.ai?utm_medium=li_github&utm_source=github&utm_campaign=2026--)** is our enterprise platform for agentic OCR, parsing, extraction, indexing and more. You can use LlamaParse with this framework or on its own; see [LlamaParse](#llamacloud-document-agent-platform) below for signup and product links.
 
@@ -16,19 +15,13 @@ LlamaIndex OSS (by [LlamaIndex](https://llamaindex.ai?utm_medium=li_github&utm_s
 > - [LlamaIndex OSS](https://developers.llamaindex.ai/python/framework/?utm_medium=li_github&utm_source=github&utm_campaign=2026--)
 > - [LlamaAgents](https://developers.llamaindex.ai/python/llamaagents/overview/?utm_medium=li_github&utm_source=github&utm_campaign=2026--)
 
-Building with LlamaIndex typically involves working with LlamaIndex core and a chosen set of integrations (or plugins). There are two ways to start building with LlamaIndex in
-Python:
+Building with LlamaIndex typically involves working with LlamaIndex core and a chosen set of integrations (or plugins). There are two ways to start building with LlamaIndex in Python:
 
 1. **Starter**: [`llama-index`](https://pypi.org/project/llama-index/). A starter Python package that includes core LlamaIndex as well as a selection of integrations.
 
-2. **Customized**: [`llama-index-core`](https://pypi.org/project/llama-index-core/). Install core LlamaIndex and add your chosen LlamaIndex integration packages on [LlamaHub](https://llamahub.ai/)
-   that are required for your application. There are over 300 LlamaIndex integration
-   packages that work seamlessly with core, allowing you to build with your preferred
-   LLM, embedding, and vector store providers.
+2. **Customized**: [`llama-index-core`](https://pypi.org/project/llama-index-core/). Install core LlamaIndex and add your chosen LlamaIndex integration packages on [LlamaHub](https://llamahub.ai/) that are required for your application. There are over 300 LlamaIndex integration packages that work seamlessly with core, allowing you to build with your preferred LLM, embedding, and vector store providers.
 
-The LlamaIndex Python library is namespaced such that import statements which
-include `core` imply that the core package is being used. In contrast, those
-statements without `core` imply that an integration package is being used.
+The LlamaIndex Python library is namespaced such that import statements which include `core` imply that the core package is being used. In contrast, those statements without `core` imply that an integration package is being used.
 
 ```python
 # typical pattern
@@ -40,6 +33,59 @@ from llama_index.xxx.yyy import (
 # concrete example
 from llama_index.core.llms import LLM
 from llama_index.llms.openai import OpenAI
+```
+
+## ⚡ Quickstart
+
+Get up and running in minutes.
+
+### 1. Install
+
+```sh
+# Minimal install with OpenAI support
+pip install llama-index-core llama-index-llms-openai llama-index-embeddings-openai
+
+# Or install the full starter bundle
+pip install llama-index
+```
+
+### 2. Set your API key
+
+```sh
+export OPENAI_API_KEY="sk-..."
+```
+
+### 3. Index your documents
+
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
+# Load documents from a local directory
+documents = SimpleDirectoryReader("./data").load_data()
+
+# Build a vector index over them
+index = VectorStoreIndex.from_documents(documents)
+```
+
+### 4. Query
+
+```python
+query_engine = index.as_query_engine()
+response = query_engine.query("What are the main topics in these documents?")
+print(response)
+```
+
+### 5. Persist and reload
+
+```python
+# Save index to disk
+index.storage_context.persist(persist_dir="./storage")
+
+# Reload later
+from llama_index.core import StorageContext, load_index_from_storage
+
+storage_context = StorageContext.from_defaults(persist_dir="./storage")
+index = load_index_from_storage(storage_context)
 ```
 
 ### LlamaParse (document agent platform)
@@ -55,15 +101,11 @@ from llama_index.llms.openai import OpenAI
 
 ### Important Links
 
-[Documentation](https://developers.llamaindex.ai/python/framework/?utm_medium=li_github&utm_source=github&utm_campaign=2026--)
-
-[X (formerly Twitter)](https://x.com/llama_index)
-
-[LinkedIn](https://www.linkedin.com/company/llamaindex/)
-
-[Reddit](https://www.reddit.com/r/LlamaIndex/)
-
-[Discord](https://discord.gg/dGcwcsnxhU)
+- [Documentation](https://developers.llamaindex.ai/python/framework/?utm_medium=li_github&utm_source=github&utm_campaign=2026--)
+- [X (formerly Twitter)](https://x.com/llama_index)
+- [LinkedIn](https://www.linkedin.com/company/llamaindex/)
+- [Reddit](https://www.reddit.com/r/LlamaIndex/)
+- [Discord](https://discord.gg/dGcwcsnxhU)
 
 ## 🚀 Overview
 
@@ -85,36 +127,15 @@ That's where **LlamaIndex** comes in. LlamaIndex is a "data framework" to help y
 - Provides an **advanced retrieval/query interface over your data**: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
 - Allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, or anything else).
 
-LlamaIndex provides tools for both beginner users and advanced users. Our high-level API allows beginner users to use LlamaIndex to ingest and query their data in
-5 lines of code. Our lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules),
-to fit their needs.
+LlamaIndex provides tools for both beginner users and advanced users. Our high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code. Our lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules), to fit their needs.
 
-## 💡 Contributing
+## 💻 Extended Usage Examples
 
-Interested in contributing? Contributions to LlamaIndex core as well as contributing
-integrations that build on the core are both accepted and highly encouraged! See our [Contribution Guide](CONTRIBUTING.md) for more details.
-
-New integrations should meaningfully integrate with existing LlamaIndex framework components. At the discretion of LlamaIndex maintainers, some integrations may be declined.
-
-## 📄 Documentation
-
-Full documentation can be found [here](https://developers.llamaindex.ai/python/framework/?utm_medium=li_github&utm_source=github&utm_campaign=2026--)
-
-Please check it out for the most up-to-date tutorials, how-to guides, references, and other resources!
-
-## 💻 Example Usage
+### Using OpenAI (default)
 
 ```sh
-# custom selection of integrations to work with core
-pip install llama-index-core
-pip install llama-index-llms-openai
-pip install llama-index-llms-ollama
-pip install llama-index-embeddings-huggingface
+pip install llama-index-core llama-index-llms-openai
 ```
-
-Examples are in the `docs/examples` folder. Indices are in the `indices` folder (see list of indices below).
-
-To build a simple vector store index using OpenAI:
 
 ```python
 import os
@@ -127,58 +148,46 @@ documents = SimpleDirectoryReader("YOUR_DATA_DIRECTORY").load_data()
 index = VectorStoreIndex.from_documents(documents)
 ```
 
-To build a simple vector store index using non-OpenAI LLMs, e.g. LLMs hosted through Ollama:
+### Using a local LLM via Ollama
+
+```sh
+pip install llama-index-core llama-index-llms-ollama llama-index-embeddings-huggingface
+```
 
 ```python
 from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
-from transformers import AutoTokenizer
 
-# set the LLM
+# Configure the local LLM
 Settings.llm = Ollama(
-    model="llama-3.1:latest",
+    model="llama3.2",
     request_timeout=360.0,
 )
 
-# set tokenizer to match LLM
-Settings.tokenizer = AutoTokenizer.from_pretrained(
-    "meta-llama/Llama-3.1-8B-Instruct"
-)
-
-# set the embed model
+# Configure a local embedding model
 Settings.embed_model = HuggingFaceEmbedding(
     model_name="BAAI/bge-small-en-v1.5"
 )
 
 documents = SimpleDirectoryReader("YOUR_DATA_DIRECTORY").load_data()
-index = VectorStoreIndex.from_documents(
-    documents,
-)
-```
+index = VectorStoreIndex.from_documents(documents)
 
-To query:
-
-```python
 query_engine = index.as_query_engine()
-query_engine.query("YOUR_QUESTION")
+response = query_engine.query("YOUR_QUESTION")
+print(response)
 ```
 
-By default, data is stored in-memory.
-To persist to disk (under `./storage`):
+### Persisting and reloading an index
 
 ```python
+# Persist to disk (default: ./storage)
 index.storage_context.persist()
-```
 
-To reload from disk:
-
-```python
+# Reload from disk
 from llama_index.core import StorageContext, load_index_from_storage
 
-# rebuild storage context
 storage_context = StorageContext.from_defaults(persist_dir="./storage")
-# load index
 index = load_index_from_storage(storage_context)
 ```
 
@@ -201,11 +210,23 @@ find "$STATIC_DIR" -type f | while read -r file; do
 done
 ```
 
+## 💡 Contributing
+
+Interested in contributing? Contributions to LlamaIndex core as well as contributing integrations that build on the core are both accepted and highly encouraged! See our [Contribution Guide](CONTRIBUTING.md) for more details.
+
+New integrations should meaningfully integrate with existing LlamaIndex framework components. At the discretion of LlamaIndex maintainers, some integrations may be declined.
+
+## 📔 Documentation
+
+Full documentation can be found [here](https://developers.llamaindex.ai/python/framework/?utm_medium=li_github&utm_source=github&utm_campaign=2026--).
+
+Please check it out for the most up-to-date tutorials, how-to guides, references, and other resources!
+
 ## 📖 Citation
 
 Reference to cite if you use LlamaIndex in a paper:
 
-```
+```bibtex
 @software{Liu_LlamaIndex_2022,
 author = {Liu, Jerry},
 doi = {10.5281/zenodo.1234},

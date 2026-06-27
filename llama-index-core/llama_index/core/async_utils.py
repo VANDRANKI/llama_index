@@ -1,17 +1,31 @@
-"""Async utils."""
+"""Async utilities for running coroutines and managing concurrency."""
 
 import asyncio
 import contextvars
 import concurrent.futures
 from itertools import zip_longest
-from typing import Any, Coroutine, Iterable, List, Optional, TypeVar
+from typing import Any, AsyncIterator, Coroutine, Generator, Iterable, Iterator, List, Optional, TypeVar
 
 import llama_index.core.instrumentation as instrument
 
 dispatcher = instrument.get_dispatcher(__name__)
 
+T = TypeVar("T")
+
+DEFAULT_NUM_WORKERS = 4
+
 
 def get_asyncio_module(show_progress: bool = False) -> Any:
+    """Return the asyncio module or a tqdm-wrapped variant for progress display.
+
+    Args:
+        show_progress: If ``True``, return ``tqdm.asyncio.tqdm_asyncio`` so that
+            gathered coroutines render a progress bar.  If ``False`` (default),
+            return the standard :mod:`asyncio` module.
+
+    Returns:
+        Either :mod:`asyncio` or :class:`tqdm.asyncio.tqdm_asyncio`.
+    """
     if show_progress:
         from tqdm.asyncio import tqdm_asyncio
 
@@ -23,6 +37,18 @@ def get_asyncio_module(show_progress: bool = False) -> Any:
 
 
 def asyncio_module(show_progress: bool = False) -> Any:
+    """Return the asyncio module, optionally with tqdm progress support.
+
+    .. deprecated::
+        Use :func:`get_asyncio_module` instead.  This function will be removed
+        in a future release.
+
+    Args:
+        show_progress: Passed through to :func:`get_asyncio_module`.
+
+    Returns:
+        Either :mod:`asyncio` or :class:`tqdm.asyncio.tqdm_asyncio`.
+    """
     import warnings
 
     warnings.warn(
@@ -34,12 +60,28 @@ def asyncio_module(show_progress: bool = False) -> Any:
     return get_asyncio_module(show_progress=show_progress)
 
 
-def asyncio_run(coro: Coroutine) -> Any:
-    """
-    Gets an existing event loop to run the coroutine.
+def asyncio_run(coro: Coroutine[Any, Any, T]) -> T:
+    """Run *coro* on an event loop, handling both sync and async call sites.
 
-    If there is no existing event loop, creates a new one.
-    If an event loop is already running, uses threading to run in a separate thread.
+    Behaviour:
+
+    - If there is an existing event loop that is **not** running, the coroutine
+      is run on that loop directly via :meth:`asyncio.AbstractEventLoop.run_until_complete`.
+    - If the existing event loop **is** running (e.g. inside a Jupyter notebook
+      or another async framework), the coroutine is scheduled in a brand-new
+      loop on a background thread so that the caller is not blocked.
+    - If no event loop exists at all, :func:`asyncio.run` is used as a fallback.
+
+    Args:
+        coro: The coroutine to execute.
+
+    Returns:
+        The value returned by *coro*.
+
+    Raises:
+        RuntimeError: If nested async cannot be handled automatically.  In that
+            case, apply ``nest_asyncio.apply()`` before calling this function or
+            use an async entry point (``aquery()``, ``achat()``, etc.).
     """
     try:
         # Check if there's an existing event loop
@@ -47,11 +89,11 @@ def asyncio_run(coro: Coroutine) -> Any:
 
         # Check if the loop is already running
         if loop.is_running():
-            # If loop is already running, run in a separate thread
-            # Snapshot the current context so we can propagate contextvars
+            # If loop is already running, run in a separate thread.
+            # Snapshot the current context so contextvars are propagated.
             ctx = contextvars.copy_context()
 
-            def run_coro_in_thread() -> Any:
+            def run_coro_in_thread() -> T:
                 new_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(new_loop)
                 try:
@@ -63,76 +105,109 @@ def asyncio_run(coro: Coroutine) -> Any:
                 future = executor.submit(run_coro_in_thread)
                 return future.result()
         else:
-            # If we're here, there's an existing loop but it's not running
+            # Existing loop is not running — use it directly.
             return loop.run_until_complete(coro)
 
-    except RuntimeError as e:
-        # If we can't get the event loop, we're likely in a different thread
+    except RuntimeError:
+        # No accessible event loop; fall back to asyncio.run().
         try:
             return asyncio.run(coro)
-        except RuntimeError as e:
+        except RuntimeError:
             raise RuntimeError(
-                "Detected nested async. Please use nest_asyncio.apply() to allow nested event loops."
-                "Or, use async entry methods like `aquery()`, `aretriever`, `achat`, etc."
+                "Detected nested async. Please use nest_asyncio.apply() to allow "
+                "nested event loops, or use async entry methods like `aquery()`, "
+                "`aretriever`, `achat()`, etc."
             )
 
 
 def run_async_tasks(
-    tasks: List[Coroutine],
+    tasks: List[Coroutine[Any, Any, T]],
     show_progress: bool = False,
     progress_bar_desc: str = "Running async tasks",
-) -> List[Any]:
-    """Run a list of async tasks."""
+) -> List[T]:
+    """Run a list of async tasks concurrently and return their results.
+
+    Args:
+        tasks: List of coroutines to execute concurrently.
+        show_progress: If ``True``, display a ``tqdm`` progress bar while the
+            tasks are running.  Falls back to non-progress execution if tqdm or
+            nest_asyncio are unavailable.
+        progress_bar_desc: Label shown on the progress bar when
+            *show_progress* is ``True``.
+
+    Returns:
+        List of results in the same order as *tasks*.
+    """
     tasks_to_execute: List[Any] = tasks
     if show_progress:
         try:
             import nest_asyncio
             from tqdm.asyncio import tqdm
 
-            # jupyter notebooks already have an event loop running
-            # we need to reuse it instead of creating a new one
+            # Jupyter notebooks already have a running event loop;
+            # nest_asyncio lets us reuse it instead of creating a new one.
             nest_asyncio.apply()
             loop = asyncio.get_event_loop()
 
-            async def _tqdm_gather() -> List[Any]:
+            async def _tqdm_gather() -> List[T]:
                 return await tqdm.gather(*tasks_to_execute, desc=progress_bar_desc)
 
-            tqdm_outputs: List[Any] = loop.run_until_complete(_tqdm_gather())
+            tqdm_outputs: List[T] = loop.run_until_complete(_tqdm_gather())
             return tqdm_outputs
-        # run the operation w/o tqdm on hitting a fatal
-        # may occur in some environments where tqdm.asyncio
-        # is not supported
         except Exception:
+            # Run without tqdm if it is unsupported in the current environment.
             pass
 
-    async def _gather() -> List[Any]:
+    async def _gather() -> List[T]:
         return await asyncio.gather(*tasks_to_execute)
 
-    outputs: List[Any] = asyncio_run(_gather())
+    outputs: List[T] = asyncio_run(_gather())
     return outputs
 
 
-def chunks(iterable: Iterable, size: int) -> Iterable:
+def chunks(iterable: Iterable[T], size: int) -> Iterator[tuple]:
+    """Split *iterable* into consecutive chunks of at most *size* items.
+
+    The last chunk is padded with ``None`` values if the iterable length is not
+    a multiple of *size*.
+
+    Args:
+        iterable: Any iterable to chunk.
+        size: Maximum number of items per chunk.
+
+    Yields:
+        Tuples of length *size*.  The final tuple may contain ``None`` padding.
+    """
     args = [iter(iterable)] * size
     return zip_longest(*args, fillvalue=None)
 
 
 async def batch_gather(
-    tasks: List[Coroutine], batch_size: int = 10, verbose: bool = False
-) -> List[Any]:
-    output: List[Any] = []
+    tasks: List[Coroutine[Any, Any, T]],
+    batch_size: int = 10,
+    verbose: bool = False,
+) -> List[T]:
+    """Run coroutines in batches, gathering *batch_size* at a time.
+
+    Useful for limiting the number of in-flight requests to an external API
+    without using a semaphore.
+
+    Args:
+        tasks: Coroutines to execute.
+        batch_size: How many coroutines to run concurrently per batch.
+        verbose: If ``True``, print progress to stdout after each batch.
+
+    Returns:
+        Flat list of results in submission order.
+    """
+    output: List[T] = []
     for task_chunk in chunks(tasks, batch_size):
         task_chunk = (task for task in task_chunk if task is not None)
-        output_chunk = await asyncio.gather(*task_chunk)
+        output_chunk: tuple = await asyncio.gather(*task_chunk)
         output.extend(output_chunk)
         if verbose:
             print(f"Completed {len(output)} out of {len(tasks)} tasks")
     return output
-
-
-DEFAULT_NUM_WORKERS = 4
-
-T = TypeVar("T")
 
 
 @dispatcher.span
@@ -142,24 +217,25 @@ async def run_jobs(
     workers: int = DEFAULT_NUM_WORKERS,
     desc: Optional[str] = None,
 ) -> List[T]:
-    """
-    Run jobs.
+    """Run async jobs with a bounded concurrency semaphore.
+
+    All *jobs* are submitted immediately, but at most *workers* coroutines are
+    allowed to execute concurrently at any given time.
 
     Args:
-        jobs (List[Coroutine]):
-            List of jobs to run.
-        show_progress (bool):
-            Whether to show progress bar.
+        jobs: List of coroutines to run.
+        show_progress: Whether to render a ``tqdm`` progress bar.
+        workers: Maximum number of concurrently running coroutines.
+        desc: Description label for the progress bar (used when
+            *show_progress* is ``True``).
 
     Returns:
-        List[Any]:
-            List of results.
-
+        List of results in the same order as *jobs*.
     """
     semaphore = asyncio.Semaphore(workers)
 
     @dispatcher.span
-    async def worker(job: Coroutine) -> Any:
+    async def worker(job: Coroutine[Any, Any, T]) -> T:
         async with semaphore:
             return await job
 
@@ -168,7 +244,7 @@ async def run_jobs(
     if show_progress:
         from tqdm.asyncio import tqdm_asyncio
 
-        results = await tqdm_asyncio.gather(*pool_jobs, desc=desc)
+        results: List[T] = await tqdm_asyncio.gather(*pool_jobs, desc=desc)
     else:
         results = await asyncio.gather(*pool_jobs)
 

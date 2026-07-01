@@ -75,7 +75,7 @@ def load_pyproject(package_path: Path) -> dict:
         return tomli.load(f)
 
 
-def find_integrations(root_path: Path, recursive=False) -> list[Path]:
+def find_integrations(root_path: Path, recursive: bool = False) -> list[Path]:
     """Find all integrations packages in the repo."""
     package_roots: list[Path] = []
     integrations_root = root_path

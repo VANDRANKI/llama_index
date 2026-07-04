@@ -37,6 +37,26 @@ def _marshal_llm_to_json(output: str) -> str:
 
 
 def parse_json_markdown(text: str) -> Any:
+    """
+    Parse a JSON object out of a markdown-formatted string.
+
+    Handles JSON embedded in a ` ```json ` fenced code block as well as raw
+    JSON possibly surrounded by extraneous text. Falls back to a lenient
+    YAML parse (which tolerates trailing commas) if strict JSON decoding
+    fails.
+
+    Args:
+        text: The raw text that may contain a JSON object, optionally
+            wrapped in a markdown code fence.
+
+    Returns:
+        The parsed JSON object (e.g. a `dict` or `list`).
+
+    Raises:
+        OutputParserException: If the extracted string cannot be parsed as
+            either JSON or YAML.
+
+    """
     if "```json" in text:
         text = text.split("```json")[1].strip().strip("```").strip()
 
@@ -63,6 +83,23 @@ def parse_json_markdown(text: str) -> Any:
 
 
 def parse_code_markdown(text: str, only_last: bool) -> List[str]:
+    """
+    Extract code block(s) from a markdown-formatted string.
+
+    Looks for one or more ` ``` `-fenced code blocks in `text`. If none are
+    found, falls back to treating the (optionally quote- or backtick-
+    wrapped) input as the code itself.
+
+    Args:
+        text: The raw text that may contain one or more fenced code blocks.
+        only_last: If `True`, return only the last matched code block.
+            Otherwise, return all matched code blocks.
+
+    Returns:
+        A list of extracted code strings. Contains a single element when
+        `only_last` is `True` or when no fenced code blocks were found.
+
+    """
     # Regular expression pattern to match code within triple-backticks
     pattern = r"```(.*?)```"
 

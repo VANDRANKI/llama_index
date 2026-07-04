@@ -13,4 +13,4 @@ class StructuredOutput:
 
 
 class OutputParserException(Exception):
-    pass
+    """Raised when an output parser fails to parse a model's raw output."""

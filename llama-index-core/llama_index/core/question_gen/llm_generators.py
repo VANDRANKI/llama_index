@@ -18,6 +18,8 @@ from llama_index.core.types import BaseOutputParser
 
 
 class LLMQuestionGenerator(BaseQuestionGenerator):
+    """Generates sub questions from a query using an LLM, given a set of tools."""
+
     def __init__(
         self,
         llm: LLM,
@@ -67,6 +69,18 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     def generate(
         self, tools: Sequence[ToolMetadata], query: QueryBundle
     ) -> List[SubQuestion]:
+        """
+        Generate sub questions for `query` given the available `tools`.
+
+        Args:
+            tools: The tools available to answer sub questions, used to
+                build the prompt's tool descriptions.
+            query: The original query to decompose into sub questions.
+
+        Returns:
+            The list of generated `SubQuestion` instances.
+
+        """
         tools_str = build_tools_text(tools)
         query_str = query.query_str
         prediction = self._llm.predict(
@@ -83,6 +97,7 @@ class LLMQuestionGenerator(BaseQuestionGenerator):
     async def agenerate(
         self, tools: Sequence[ToolMetadata], query: QueryBundle
     ) -> List[SubQuestion]:
+        """Async version of `generate`."""
         tools_str = build_tools_text(tools)
         query_str = query.query_str
         prediction = await self._llm.apredict(

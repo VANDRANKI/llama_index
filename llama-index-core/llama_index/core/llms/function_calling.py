@@ -255,7 +255,12 @@ class FunctionCallingLLM(LLM):
             return AgentChatResponse(response=output_text, sources=tool_outputs)
         else:
             if len(tool_outputs) > 1:
-                raise ValueError("Invalid")
+                raise ValueError(
+                    "Got multiple tool outputs but allow_parallel_tool_calls is "
+                    "False. Set allow_parallel_tool_calls=True to permit more "
+                    f"than one tool call per response. Got {len(tool_outputs)} "
+                    "tool outputs."
+                )
             elif len(tool_outputs) == 0:
                 return AgentChatResponse(
                     response=response.message.content or "", sources=tool_outputs
@@ -323,7 +328,12 @@ class FunctionCallingLLM(LLM):
             return AgentChatResponse(response=output_text, sources=tool_outputs)
         else:
             if len(tool_outputs) > 1:
-                raise ValueError("Invalid")
+                raise ValueError(
+                    "Got multiple tool outputs but allow_parallel_tool_calls is "
+                    "False. Set allow_parallel_tool_calls=True to permit more "
+                    f"than one tool call per response. Got {len(tool_outputs)} "
+                    "tool outputs."
+                )
             elif len(tool_outputs) == 0:
                 return AgentChatResponse(
                     response=response.message.content or "", sources=tool_outputs

@@ -29,6 +29,22 @@ ROLES_FROM_GEMINI: dict[str, MessageRole] = {
 def merge_neighboring_same_role_messages(
     messages: Sequence[ChatMessage],
 ) -> Sequence[ChatMessage]:
+    """
+    Merge consecutive messages that map to the same Gemini role.
+
+    Gemini's chat mode rejects multiple consecutive messages with the same
+    role, so any run of neighboring messages that translate to the same
+    Gemini role (see ``ROLES_TO_GEMINI``) is combined into a single message,
+    concatenating their content blocks in order.
+
+    Args:
+        messages (Sequence[ChatMessage]): The messages to merge, in order.
+
+    Returns:
+        Sequence[ChatMessage]: The messages with neighboring same-role runs
+        merged into a single message each.
+
+    """
     if len(messages) < 2:
         # Nothing to merge
         return messages

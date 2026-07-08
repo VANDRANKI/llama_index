@@ -617,7 +617,9 @@ class SimpleDirectoryReader(BaseReader, ResourcesReaderMixin, FileSystemReaderMi
                 raise ImportError(str(e))
             except Exception as e:
                 if raise_on_error:
-                    raise Exception("Error loading file") from e
+                    raise Exception(
+                        f"Error loading file {input_file} with reader {type(reader).__name__}: {e}"
+                    ) from e
                 # otherwise, just skip the file and report the error
                 print(
                     f"Failed to load file {input_file} with error: {e}. Skipping...",

@@ -78,7 +78,10 @@ class JSONNodeParser(NodeParser):
                     )
                 )
         else:
-            raise ValueError("JSON is invalid")
+            raise ValueError(
+                f"JSON is invalid: expected a dict or list at the top level, "
+                f"got {type(data).__name__}"
+            )
 
         return json_nodes
 

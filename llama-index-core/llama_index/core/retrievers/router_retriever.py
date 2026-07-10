@@ -96,7 +96,7 @@ class RouterRetriever(BaseRetriever):
                     selected_retriever = self._retrievers[result.ind]
                     logger.info(f"Selecting retriever {result.ind}: {result.reason}.")
                 except ValueError as e:
-                    raise ValueError("Failed to select retriever") from e
+                    raise ValueError(f"Failed to select retriever: {e}") from e
 
                 cur_results = selected_retriever.retrieve(query_bundle)
                 retrieved_results = {n.node.node_id: n for n in cur_results}
@@ -132,7 +132,7 @@ class RouterRetriever(BaseRetriever):
                     selected_retriever = self._retrievers[result.ind]
                     logger.info(f"Selecting retriever {result.ind}: {result.reason}.")
                 except ValueError as e:
-                    raise ValueError("Failed to select retriever") from e
+                    raise ValueError(f"Failed to select retriever: {e}") from e
 
                 cur_results = await selected_retriever.aretrieve(query_bundle)
                 retrieved_results = {n.node.node_id: n for n in cur_results}

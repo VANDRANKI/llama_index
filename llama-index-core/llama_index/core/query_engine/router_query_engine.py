@@ -190,7 +190,7 @@ class RouterQueryEngine(BaseQueryEngine):
                     if self._verbose:
                         print_text(log_str + "\n", color="pink")
                 except ValueError as e:
-                    raise ValueError("Failed to select query engine") from e
+                    raise ValueError(f"Failed to select query engine: {e}") from e
 
                 final_response = selected_query_engine.query(query_bundle)
 
@@ -235,7 +235,7 @@ class RouterQueryEngine(BaseQueryEngine):
                     if self._verbose:
                         print_text(log_str + "\n", color="pink")
                 except ValueError as e:
-                    raise ValueError("Failed to select query engine") from e
+                    raise ValueError(f"Failed to select query engine: {e}") from e
 
                 final_response = await selected_query_engine.aquery(query_bundle)
 

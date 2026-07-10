@@ -43,7 +43,7 @@ class LoadAndSearchToolSpec(BaseToolSpec):
         You are required to pass the natural language query argument when calling this endpoint
 
         Args:
-            query (str): The natural language query used to retreieve information from the index
+            query (str): The natural language query used to retrieve information from the index
     """
 
     def __init__(

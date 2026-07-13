@@ -92,7 +92,11 @@ class SimpleToolNodeMapping(BaseToolNodeMapping):
     def _from_node(self, node: BaseNode) -> BaseTool:
         """From node."""
         if node.metadata is None:
-            raise ValueError("Metadata must be set")
+            raise ValueError(
+                f"Cannot convert node '{node.node_id}' back to a tool: "
+                "node.metadata is None, but a 'name' key is required "
+                "(use an empty dict rather than None if there is no metadata)"
+            )
         return self._tools[node.metadata["name"]]
 
 
@@ -150,5 +154,9 @@ class SimpleQueryToolNodeMapping(BaseQueryToolNodeMapping):
     def _from_node(self, node: BaseNode) -> QueryEngineTool:
         """From node."""
         if node.metadata is None:
-            raise ValueError("Metadata must be set")
+            raise ValueError(
+                f"Cannot convert node '{node.node_id}' back to a QueryEngineTool: "
+                "node.metadata is None, but a 'name' key is required "
+                "(use an empty dict rather than None if there is no metadata)"
+            )
         return self._tools[node.metadata["name"]]

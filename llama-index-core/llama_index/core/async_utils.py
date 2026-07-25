@@ -150,6 +150,10 @@ async def run_jobs(
             List of jobs to run.
         show_progress (bool):
             Whether to show progress bar.
+        workers (int):
+            Number of jobs to run concurrently. Defaults to `DEFAULT_NUM_WORKERS`.
+        desc (Optional[str]):
+            Description to display on the progress bar, if `show_progress` is True.
 
     Returns:
         List[Any]:

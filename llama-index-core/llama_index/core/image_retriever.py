@@ -72,6 +72,14 @@ class BaseImageRetriever(PromptMixin, DispatcherSpanMixin):
         self,
         str_or_query_bundle: QueryType,
     ) -> List[NodeWithScore]:
+        """
+        Asynchronously retrieve image nodes given query or single image input.
+
+        Args:
+            str_or_query_bundle (QueryType): a query text
+            string or a QueryBundle object.
+
+        """
         if isinstance(str_or_query_bundle, str):
             str_or_query_bundle = QueryBundle(query_str=str_or_query_bundle)
         return await self._atext_to_image_retrieve(str_or_query_bundle)
@@ -92,6 +100,14 @@ class BaseImageRetriever(PromptMixin, DispatcherSpanMixin):
         self,
         str_or_query_bundle: QueryType,
     ) -> List[NodeWithScore]:
+        """
+        Asynchronously retrieve image nodes given single image input.
+
+        Args:
+            str_or_query_bundle (QueryType): a image path
+            string or a QueryBundle object.
+
+        """
         if isinstance(str_or_query_bundle, str):
             # leave query_str as empty since we are using image_path for image retrieval
             str_or_query_bundle = QueryBundle(

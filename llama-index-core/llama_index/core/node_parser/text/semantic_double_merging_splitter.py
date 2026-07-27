@@ -356,7 +356,7 @@ class SemanticDoubleMergingSplitterNodeParser(NodeParser):
         text = text.lower()
         # Remove urls
         text = re.sub(r"http\S+|www\S+|https\S+", "", text, flags=re.MULTILINE)
-        # Remove punctuations
+        # Remove punctuation
         text = text.translate(str.maketrans("", "", string.punctuation))
         # Remove stopwords
         tokens = globals_helper.punkt_tokenizer.tokenize(text)

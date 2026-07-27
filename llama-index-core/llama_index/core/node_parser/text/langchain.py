@@ -33,7 +33,7 @@ class LangchainNodeParser(TextSplitter):
         include_metadata: bool = True,
         include_prev_next_rel: bool = True,
         id_func: Optional[Callable[[int, Document], str]] = None,
-    ):
+    ) -> None:
         """Initialize with parameters."""
         id_func = id_func or default_id_func
 

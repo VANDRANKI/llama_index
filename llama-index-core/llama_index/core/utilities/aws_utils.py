@@ -14,6 +14,35 @@ def get_aws_service_client(
     max_retries: Optional[int] = 3,
     timeout: Optional[float] = 60.0,
 ) -> "botocore.client.BaseClient":
+    """
+    Create a boto3 client for the given AWS service.
+
+    If `profile_name` is not set and `aws_access_key_id` is provided, a
+    session is created from the explicit credentials. Otherwise, a session
+    is created from `profile_name` (falling back to boto3's default
+    credential resolution when `profile_name` is also `None`).
+
+    Args:
+        service_name (Optional[str]): The AWS service to create a client for
+            (e.g. "s3", "bedrock-runtime").
+        region_name (Optional[str]): The AWS region to use.
+        aws_access_key_id (Optional[str]): AWS access key ID for explicit credentials.
+        aws_secret_access_key (Optional[str]): AWS secret access key for explicit credentials.
+        aws_session_token (Optional[str]): AWS session token for temporary credentials.
+        profile_name (Optional[str]): Name of an AWS profile to use instead of
+            explicit credentials.
+        max_retries (Optional[int]): Maximum number of retries for failed requests.
+            Defaults to 3.
+        timeout (Optional[float]): Connect timeout, in seconds. Defaults to 60.0.
+
+    Returns:
+        botocore.client.BaseClient: The configured boto3 service client.
+
+    Raises:
+        ImportError: If `boto3`/`botocore` are not installed.
+        ValueError: If the provided credentials could not be verified.
+
+    """
     try:
         import boto3
         import botocore

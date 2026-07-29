@@ -12,6 +12,18 @@ dispatcher = instrument.get_dispatcher(__name__)
 
 
 def get_asyncio_module(show_progress: bool = False) -> Any:
+    """
+    Get the asyncio module to use for running coroutines.
+
+    Args:
+        show_progress (bool): If True, returns `tqdm.asyncio.tqdm_asyncio`
+            so progress is reported while awaiting tasks. Otherwise,
+            returns the standard library `asyncio` module.
+
+    Returns:
+        Any: The module to use for scheduling/running async tasks.
+
+    """
     if show_progress:
         from tqdm.asyncio import tqdm_asyncio
 
@@ -113,6 +125,20 @@ def run_async_tasks(
 
 
 def chunks(iterable: Iterable, size: int) -> Iterable:
+    """
+    Split an iterable into chunks of at most `size` elements.
+
+    The final chunk is padded with `None` if the number of items in
+    `iterable` is not evenly divisible by `size`.
+
+    Args:
+        iterable (Iterable): The iterable to split into chunks.
+        size (int): The maximum number of elements per chunk.
+
+    Returns:
+        Iterable: An iterable of tuples, each containing up to `size` elements.
+
+    """
     args = [iter(iterable)] * size
     return zip_longest(*args, fillvalue=None)
 
@@ -120,6 +146,19 @@ def chunks(iterable: Iterable, size: int) -> Iterable:
 async def batch_gather(
     tasks: List[Coroutine], batch_size: int = 10, verbose: bool = False
 ) -> List[Any]:
+    """
+    Run coroutines in sequential batches, gathering results within each batch.
+
+    Args:
+        tasks (List[Coroutine]): The coroutines to run.
+        batch_size (int): The maximum number of coroutines to run concurrently
+            in a single batch. Defaults to 10.
+        verbose (bool): If True, prints progress after each batch completes.
+
+    Returns:
+        List[Any]: The results of all coroutines, in the same order as `tasks`.
+
+    """
     output: List[Any] = []
     for task_chunk in chunks(tasks, batch_size):
         task_chunk = (task for task in task_chunk if task is not None)

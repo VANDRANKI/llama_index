@@ -90,12 +90,12 @@ class DatabaseToolSpec(BaseToolSpec, BaseReader):
             List[Document]: A list of Document objects.
 
         """
+        if not query:
+            raise ValueError("A query parameter is necessary to filter the data")
+
         documents = []
         with self.sql_database.engine.connect() as connection:
-            if query is None:
-                raise ValueError("A query parameter is necessary to filter the data")
-            else:
-                result = connection.execute(text(query))
+            result = connection.execute(text(query))
 
             for item in result.fetchall():
                 # fetch each item

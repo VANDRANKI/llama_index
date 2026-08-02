@@ -51,7 +51,7 @@ class DatabaseToolSpec(BaseToolSpec, BaseReader):
         uri: Optional[str] = None,
         scheme: Optional[str] = None,
         host: Optional[str] = None,
-        port: Optional[str] = None,
+        port: Optional[int] = None,
         user: Optional[str] = None,
         password: Optional[str] = None,
         dbname: Optional[str] = None,

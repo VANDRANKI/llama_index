@@ -5,7 +5,6 @@ import json
 from llama_index.core.llms import ChatMessage, TextBlock
 from typing import List, Type, Dict, Any, Optional, cast
 from llama_index.core.bridge.pydantic import BaseModel
-from llama_index.core.base.llms.types import ChatMessage
 from llama_index.core.llms import LLM
 
 

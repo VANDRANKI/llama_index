@@ -11,8 +11,8 @@ class GraphQLToolSpec(BaseToolSpec):
 
     spec_functions = ["graphql_request"]
 
-    def __init__(self, url: str, headers: Optional[dict] = {}):
-        self.headers = headers
+    def __init__(self, url: str, headers: Optional[dict] = None):
+        self.headers = headers or {}
         self.url = url
 
     def graphql_request(self, query: str, variables: str, operation_name: str):

@@ -22,6 +22,14 @@ class RefDocInfo(DataClassJsonMixin):
 
 
 class BaseDocumentStore(ABC):
+    """Base interface for a document store.
+
+    Document stores are responsible for persisting and retrieving the
+    ingested `BaseNode` objects that back an index, keyed by document/node
+    id. Concrete implementations (in-memory, Redis, MongoDB, etc.) provide
+    the storage backend while sharing this common interface.
+    """
+
     # ===== Save/load =====
     def persist(
         self,

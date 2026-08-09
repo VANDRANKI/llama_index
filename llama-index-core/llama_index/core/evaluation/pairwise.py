@@ -201,7 +201,10 @@ class PairwiseComparisonEvaluator(BaseEvaluator):
             votes_2 = (1 - eval_result.score) + flipped_eval_result.score
 
         if votes_1 + votes_2 != 2:  # each round, the judge can give a total of 1 vote
-            raise ValueError("Impossible score results. Total amount of votes is 2.")
+            raise ValueError(
+                "Invalid score results: expected the original and flipped "
+                f"evaluations to sum to 2 total votes, but got {votes_1 + votes_2}."
+            )
 
         # get the judges (original and flipped) who voted for answer_1
         voters_1 = [eval_result] * (eval_result.score == 1.0) + [

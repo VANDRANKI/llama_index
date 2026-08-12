@@ -6,6 +6,16 @@ from llama_index.core.schema import MetadataMode, NodeWithScore, QueryBundle
 
 
 class MetadataReplacementPostProcessor(BaseNodePostprocessor):
+    """
+    Replace each node's content with the value stored under a metadata key.
+
+    This is useful for patterns like sentence-window retrieval, where a node's
+    indexed content (e.g. a single sentence) differs from the content that
+    should actually be sent to the LLM (e.g. the surrounding window of text
+    stored in metadata). If the target key is missing from a node's metadata,
+    the node's original content is left unchanged.
+    """
+
     target_metadata_key: str = Field(
         description="Target metadata key to replace node content with."
     )

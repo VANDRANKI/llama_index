@@ -195,7 +195,11 @@ class TimeWeightedPostprocessor(BaseNodePostprocessor):
             node = node_with_score.node
             # time score
             if node.metadata is None:
-                raise ValueError("metadata is None")
+                raise ValueError(
+                    f"Node {node.node_id} has no metadata, but "
+                    f"TimeWeightedPostprocessor requires a '{self.last_accessed_key}' "
+                    "metadata key to compute recency."
+                )
 
             last_accessed = node.metadata.get(self.last_accessed_key, None)
             if last_accessed is None:

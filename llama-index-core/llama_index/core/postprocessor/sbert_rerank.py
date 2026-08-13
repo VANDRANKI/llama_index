@@ -10,6 +10,13 @@ DEFAULT_SENTENCE_TRANSFORMER_MAX_LENGTH = 512
 
 
 class SentenceTransformerRerank(BaseNodePostprocessor):
+    """Node postprocessor that reranks nodes using a sentence-transformers cross-encoder.
+
+    Scores each retrieved node against the query with a cross-encoder model
+    and keeps only the top `top_n` nodes, sorted by the new relevance score.
+    Requires the `sentence-transformers` (and `torch`) packages to be installed.
+    """
+
     model: str = Field(description="Sentence transformer model name.")
     top_n: int = Field(description="Number of nodes to return sorted by score.")
     device: str = Field(

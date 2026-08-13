@@ -11,6 +11,14 @@ DEFAULT_PERSIST_PATH = os.path.join(DEFAULT_PERSIST_DIR, DEFAULT_PERSIST_FNAME)
 
 
 class BaseIndexStore(ABC):
+    """Base class for index stores.
+
+    An index store persists the `IndexStruct` objects (e.g. graphs, lists,
+    keyword tables) that back an index, keyed by their `index_id`. Concrete
+    implementations (in-memory, key-value backed, etc.) provide both sync
+    and async variants of each operation.
+    """
+
     @abstractmethod
     def index_structs(self) -> List[IndexStruct]:
         pass

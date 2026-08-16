@@ -100,7 +100,7 @@ class SimpleSpanHandler(BaseSpanHandler[SimpleSpan]):
             raise ImportError(
                 "`treelib` package is missing. Please install it by using "
                 "`pip install treelib`."
-            )
+            ) from e
 
         all_spans = self.completed_spans + self.dropped_spans
         for s in all_spans:

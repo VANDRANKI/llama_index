@@ -66,5 +66,5 @@ class NullSpanHandler(BaseSpanHandler[BaseSpan]):
         err: Optional[BaseException] = None,
         **kwargs: Any,
     ) -> None:
-        """Logic for droppping a span."""
+        """Logic for dropping a span."""
         return

@@ -109,7 +109,7 @@ class ResourcesReaderMixin(ABC):  # pragma: no cover
         Get a dictionary of information about a specific resource.
 
         Args:
-            resource (str): The resource identifier.
+            resource_id (str): The resource identifier.
 
         Returns:
             Dict: A dictionary of information about the resource.
@@ -123,7 +123,7 @@ class ResourcesReaderMixin(ABC):  # pragma: no cover
         Get a dictionary of information about a specific resource asynchronously.
 
         Args:
-            resource (str): The resource identifier.
+            resource_id (str): The resource identifier.
 
         Returns:
             Dict: A dictionary of information about the resource.
@@ -169,7 +169,7 @@ class ResourcesReaderMixin(ABC):  # pragma: no cover
         Load data from a specific resource.
 
         Args:
-            resource (str): The resource identifier.
+            resource_id (str): The resource identifier.
 
         Returns:
             List[Document]: A list of documents loaded from the resource.

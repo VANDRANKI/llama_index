@@ -34,10 +34,10 @@ class TokenCounter:
 
     def estimate_tokens_in_messages(self, messages: List[ChatMessage]) -> int:
         """
-        Estimate token count for a single message.
+        Estimate token count for a list of messages.
 
         Args:
-            message (OpenAIMessage): The message to estimate the token count for.
+            messages (List[ChatMessage]): The messages to estimate the token count for.
 
         Returns:
             int: The estimated token count.
@@ -85,10 +85,10 @@ class TokenCounter:
 
     async def aestimate_tokens_in_messages(self, messages: List[ChatMessage]) -> int:
         """
-        Async estimate token count for a single message.
+        Async estimate token count for a list of messages.
 
         Args:
-            message (OpenAIMessage): The message to estimate the token count for.
+            messages (List[ChatMessage]): The messages to estimate the token count for.
 
         Returns:
             int: The estimated token count.

@@ -42,4 +42,3 @@ llama-index-core/llama_index/core/_static
 **/.coverage
 **/coverage.xml
 **/*.egg-info/
-storage/

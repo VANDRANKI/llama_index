@@ -17,7 +17,22 @@ def get_top_k_embeddings(
     embedding_ids: Optional[List] = None,
     similarity_cutoff: Optional[float] = None,
 ) -> Tuple[List[float], List]:
-    """Get top nodes by similarity to the query."""
+    """
+    Get top nodes by similarity to the query.
+
+    Args:
+        query_embedding: The embedding to compare candidates against.
+        embeddings: Candidate embeddings to rank, in the same order as `embedding_ids`.
+        similarity_fn: Function used to score a candidate against the query embedding.
+            Defaults to cosine similarity.
+        similarity_top_k: If set, only the top-k highest scoring embeddings are kept.
+        embedding_ids: Identifiers returned alongside each embedding's score. Defaults
+            to the positional index of each embedding.
+        similarity_cutoff: If set, embeddings scoring at or below this value are excluded.
+
+    Returns:
+        A tuple of (similarity scores, embedding ids), both sorted by descending score.
+    """
     if embedding_ids is None:
         embedding_ids = list(range(len(embeddings)))
 
